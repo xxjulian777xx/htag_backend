@@ -14,8 +14,8 @@ def main():
     try:
 
         username = "admin"
-        email = "admin@localhost"
-        password = "admin"
+        email = "monitoresplus@gmail.com"
+        password = "M0nit0resPlu$"
 
         existing_user = db.scalar(
             select(User).where(
