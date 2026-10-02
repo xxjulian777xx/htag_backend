@@ -1,0 +1,553 @@
+Articles
+├── Autenticación             ✅
+├── articles.read             ✅
+├── articles.create           ✅
+├── articles.update           ✅
+├── articles.delete           ✅
+├── articles.schedule         ✅
+└── articles.publish          ✅
+
+Categories
+├── categories.read           ✅
+├── categories.create         ✅
+├── categories.update         ✅
+└── categories.delete         ✅
+
+
+Estado actual RBAC CMS
+Módulo	Read	Create	Update	Delete	Estado
+Articles	✅	✅	✅	✅	🟢
+Categories	✅	✅	✅	✅	🟢
+Tags	✅	✅	✅	✅	🟢
+Media	—	—	—	—	⏭️
+
+
+GET /v1/media
+    → 401 sin token
+    → 200 con editor
+                 ✅
+
+GET /v1/media/1
+    → 200
+                 ✅
+
+POST /v1/media
+    → 401 con token expirado
+    → 201 con token válido
+    → MinIO object creado
+    → uploaded_by = 5
+                 ✅
+
+PUT /v1/media/3
+    → 200
+    → metadatos actualizados
+                 ✅
+
+DELETE /v1/media/3
+    → 204
+    → objeto eliminado
+    → registro eliminado
+                 ✅
+
+GET /v1/media/3
+    → 404 Media not found
+                 ✅
+
+
+| Módulo     | RBAC | CRUD      | Estado |
+| ---------- | ---- | --------- | ------ |
+| Articles   | ✅    | ✅         | 🟢     |
+| Categories | ✅    | ✅         | 🟢     |
+| Tags       | ✅    | ✅         | 🟢     |
+| Media      | ✅    | ✅ + MinIO | 🟢     |
+
+| Módulo     | CRUD / función                 | RBAC | Estado       |
+| ---------- | ------------------------------ | ---- | ------------ |
+| Articles   | CRUD + bloques + tags          | ✓    | **Validado** |
+| Categories | CRUD                           | ✓    | **Validado** |
+| Tags       | CRUD                           | ✓    | **Validado** |
+| Media      | MinIO + metadata               | ✓    | **Validado** |
+| OCR        | Tesseract + PostgreSQL + MinIO | ✓    | **Validado** |
+
+
+RBAC Blog Informativo - Backend
+
+├── Auth / JWT / Sessions          ✅
+├── Users                          ✅
+├── Roles / Permissions            ✅
+│
+├── Categories                     ✅
+├── Tags                           ✅
+├── Articles                       ✅
+├── Article Blocks                 ✅
+├── Media + MinIO                  ✅
+├── OCR + Tesseract                ✅
+├── Notifications                  ✅
+│
+├── RBAC de módulos CMS             ✅
+├── Validaciones de negocio        ✅
+└── PostgreSQL                     ✅
+
+
+| Funcionalidad                      | Estado |
+| ---------------------------------- | ------ |
+| Auth / JWT                         | ✅      |
+| RBAC                               | ✅      |
+| Categorías                         | ✅      |
+| Tags                               | ✅      |
+| Media + MinIO                      | ✅      |
+| OCR + Tesseract                    | ✅      |
+| Crear artículo                     | ✅      |
+| Editar artículo                    | ✅      |
+| Validaciones de artículo           | ✅      |
+| Schedule                           | ✅      |
+| Publish manual                     | ✅      |
+| Publication Worker                 | ✅      |
+| `draft → scheduled → published`    | ✅      |
+| Separación de permisos editoriales | ✅      |
+
+
+| Prueba                             | Resultado |
+| ---------------------------------- | --------- |
+| Permiso `articles.archive` existe  | ✅         |
+| Permiso asignado a `editor`        | ✅         |
+| Permiso asignado a `administrador` | ✅         |
+| Endpoint aparece en OpenAPI        | ✅         |
+| `POST /v1/articles/4/archive`      | ✅ `200`   |
+| Estado `published → archived`      | ✅         |
+| `scheduled_at` queda `null`        | ✅         |
+| `published_at` se conserva         | ✅         |
+| Consulta posterior del artículo    | ✅         |
+
+
+                 ┌─────────┐
+                 │  DRAFT  │
+                 └────┬────┘
+                      │
+              ┌───────┴────────┐
+              │                │
+              ▼                ▼
+        ┌───────────┐    ┌───────────┐
+        │ SCHEDULED │───►│ PUBLISHED │
+        └───────────┘    └─────┬─────┘
+                               │
+                               │ archive
+                               ▼
+                         ┌──────────┐
+                         │ ARCHIVED │
+                         └──────────┘
+
+| ID | Acción     | Actor     | De          | A           |
+| -: | ---------- | --------- | ----------- | ----------- |
+|  4 | `publish`  | `system`  | `scheduled` | `published` |
+|  3 | `schedule` | usuario 5 | `draft`     | `scheduled` |
+|  2 | `update`   | usuario 5 | `draft`     | `draft`     |
+|  1 | `create`   | usuario 5 | —           | `draft`     |
+
+
+| Orden | Acción     | Estado anterior | Estado nuevo | Actor     |
+| ----- | ---------- | --------------- | ------------ | --------- |
+| 1     | `create`   | —               | `draft`      | Usuario 5 |
+| 2     | `update`   | `draft`         | `draft`      | Usuario 5 |
+| 3     | `schedule` | `draft`         | `scheduled`  | Usuario 5 |
+| 4     | `publish`  | `scheduled`     | `published`  | Sistema   |
+| 5     | `archive`  | `published`     | `archived`   | Usuario 5 |
+
+ARTÍCULOS
+├── CRUD                         ✅
+├── Categorías                   ✅
+├── Tags                         ✅
+├── Media / MinIO                ✅
+├── Bloques de contenido         ✅
+├── OCR                           ✅
+├── Programación                  ✅
+├── Publication Worker             ✅
+├── Publicación automática        ✅
+├── Archivado                     ✅
+├── Historial editorial           ✅
+└── RBAC                          ✅
+
+
+
+                 ┌──────────────┐
+                 │    DRAFT     │
+                 └──────┬───────┘
+                        │
+                 schedule
+                        ▼
+                 ┌──────────────┐
+                 │  SCHEDULED   │
+                 └──────┬───────┘
+                        │
+                 reschedule
+                        │
+                        └──────────────┐
+                                       │
+                        scheduled_at cambia
+                                       │
+                                       ▼
+                                ┌──────────────┐
+                                │  SCHEDULED   │
+                                └──────┬───────┘
+                                       │
+                              publication worker
+                                       ▼
+                                ┌──────────────┐
+                                │  PUBLISHED   │
+                                └──────┬───────┘
+                                       │
+                                    archive
+                                       ▼
+                                ┌──────────────┐
+                                │  ARCHIVED    │
+                                └──────────────┘
+
+
+                 ┌──────────────────────┐
+                 │    CMS / EDITOR       │
+                 │  /v1/articles         │
+                 │                      │
+                 │ draft                │
+                 │ scheduled            │
+                 │ published            │
+                 │ archived             │
+                 └──────────┬───────────┘
+                            │
+                            │ Publication Worker
+                            ▼
+                     ┌──────────────┐
+                     │  PUBLISHED   │
+                     └──────┬───────┘
+                            │
+                            ▼
+                 ┌──────────────────────┐
+                 │     API PÚBLICA      │
+                 │   /v1/public/*       │
+                 └──────────┬───────────┘
+                            │
+                  ┌─────────┴─────────┐
+                  ▼                   ▼
+             📱 App Lector       🌐 Web Lector
+
+
+
+
+                         PUBLIC API
+                             │
+          ┌──────────────────┼──────────────────┐
+          │                  │                  │
+       Articles          Categories           Tags
+          │
+          ├── paginación
+          ├── categoría
+          ├── tag
+          └── orden por publicación
+                             │
+                         Search
+                             │
+                    título / contenido /
+                    categoría / tags
+
+
+GET /v1/public/articles
+GET /v1/public/articles?category_id=1
+GET /v1/public/articles?tag_id=1
+GET /v1/public/articles?category_id=1&tag_id=1
+
+GET /v1/public/articles/today
+GET /v1/public/articles/{slug}
+
+GET /v1/public/categories
+GET /v1/public/categories/{slug}
+
+GET /v1/public/tags
+GET /v1/public/tags/{slug}
+
+GET /v1/public/search?q=...
+
+
+
+| Prueba                              | Resultado                       |
+| ----------------------------------- | ------------------------------- |
+| Sin token                           | `401 Unauthorized`              |
+| Token inválido                      | `401 Token inválido o expirado` |
+| GET preferencias                    | ✅                               |
+| Creación automática de preferencias | ✅                               |
+| PUT `font_size`                     | ✅ `large`                       |
+| PUT `theme`                         | ✅ `dark`                        |
+| PUT `voice_enabled`                 | ✅ `true`                        |
+| GET después de cambios              | ✅ conserva valores              |
+| `updated_at`                        | ✅ se actualiza                  |
+
+
+| Prueba                      | Resultado                    |
+| --------------------------- | ---------------------------- |
+| GET favoritos vacío         | ✅ `[]`                       |
+| POST artículo publicado #2  | ✅ `201`                      |
+| GET favoritos               | ✅ devuelve artículo completo |
+| POST duplicado #2           | ✅ `409`                      |
+| POST artículo programado #7 | ✅ rechazado                  |
+| DELETE favorito #2          | ✅ `204 No Content`           |
+| Autenticación               | ✅ protegida                  |
+
+
+                 NOTIFICACIONES
+                       │
+          ┌────────────┴────────────┐
+          │                         │
+       Editor                    Lector
+          │                         │
+   crear / gestionar          recibir / consultar
+                                │
+                         ┌──────┴──────┐
+                         │             │
+                       leer          eliminar
+
+                                          NOTIFICACIONES
+                          │
+             ┌────────────┴────────────┐
+             │                         │
+          GESTIÓN                    LECTOR
+             │                         │
+     /v1/notifications       /v1/reader/notifications
+             │                         │
+     notifications.read           autenticado
+     notifications.manage          propio usuario
+
+     
+AUTH
+POST /v1/auth/login
+POST /v1/auth/refresh
+POST /v1/auth/logout
+GET  /v1/auth/me
+
+PUBLIC
+GET /v1/public/articles
+GET /v1/public/articles/{slug}
+GET /v1/public/articles/today
+GET /v1/public/articles/search
+GET /v1/public/categories
+GET /v1/public/categories/{slug}
+GET /v1/public/tags
+GET /v1/public/tags/{slug}
+
+READER
+GET  /v1/reader/preferences
+PUT  /v1/reader/preferences
+
+GET    /v1/reader/favorites
+POST   /v1/reader/favorites/{article_id}
+DELETE /v1/reader/favorites/{article_id}
+
+GET    /v1/reader/notifications
+GET    /v1/reader/notifications/{id}
+PUT    /v1/reader/notifications/{id}/read
+DELETE /v1/reader/notifications/{id}
+
+
+POST /v1/auth/login
+POST /v1/auth/refresh
+POST /v1/auth/logout
+GET  /v1/auth/me
+POST /v1/auth/logout-all
+POST /v1/auth/change-password
+
+
+GET /v1/public/articles
+GET /v1/public/articles/{slug}
+GET /v1/public/articles/today
+GET /v1/public/articles/search
+
+GET /v1/public/categories
+GET /v1/public/categories/{slug}
+
+GET /v1/public/tags
+GET /v1/public/tags/{slug}
+
+GET    /v1/reader/preferences
+PUT    /v1/reader/preferences
+
+GET    /v1/reader/favorites
+POST   /v1/reader/favorites/{article_id}
+DELETE /v1/reader/favorites/{article_id}
+
+GET    /v1/reader/notifications
+GET    /v1/reader/notifications/{id}
+PUT    /v1/reader/notifications/{id}/read
+DELETE /v1/reader/notifications/{id}
+
+PUBLIC
+│
+├── GET /v1/public/articles
+├── GET /v1/public/articles/today
+├── GET /v1/public/articles/{slug}
+├── GET /v1/public/articles/search
+│
+├── GET /v1/public/categories
+├── GET /v1/public/categories/{slug}
+│
+└── GET /v1/public/tags
+    GET /v1/public/tags/{slug}
+
+
+READER AUTHENTICATED
+│
+├── GET /v1/reader/preferences
+├── PUT /v1/reader/preferences
+│
+├── GET /v1/reader/favorites
+├── POST /v1/reader/favorites/{article_id}
+├── DELETE /v1/reader/favorites/{article_id}
+│
+└── GET /v1/reader/notifications
+    GET /v1/reader/notifications/{id}
+    PUT /v1/reader/notifications/{id}/read
+    DELETE /v1/reader/notifications/{id}
+
+
+                    RBAC BLOG
+                       │
+             ┌─────────┴─────────┐
+             │                   │
+            CMS                LECTOR
+             │                   │
+      ArticleResponse       ReaderArticleResponse
+             │                   │
+             │          ┌────────┼─────────┐
+             │          │        │         │
+             │       Category   Tags      Media
+             │                              │
+             │                              ▼
+             │                         media.url
+             │                              │
+             └──────────────┐               │
+                            ▼               ▼
+                         Flutter        Web Lector
+
+
+┌──────────────────────────────┐
+│     PUBLICACIÓN MANUAL       │
+└──────────────┬───────────────┘
+               │
+               ▼
+        Article.status
+         = published
+               │
+               ▼
+      eventos_notificacion
+          = pending
+               │
+               ▼
+    Notification Worker
+               │
+               ▼
+     No hay dispositivos
+        FCM activos
+               │
+               ▼
+          event = sent
+
+AUTH / JWT / SESIONES              ✅
+RBAC / ROLES / PERMISOS            ✅
+USUARIOS                           ✅
+ARTÍCULOS / CRUD                   ✅
+BLOQUES DE ARTÍCULO                ✅
+CATEGORÍAS                         ✅
+TAGS                               ✅
+MEDIA / MINIO                      ✅
+OCR                                ✅
+HISTORIAL EDITORIAL                ✅
+PUBLICACIÓN MANUAL                 ✅
+PUBLICACIÓN PROGRAMADA             ✅
+PUBLICATION WORKER                 ✅
+FAVORITOS                          ✅
+PREFERENCIAS DEL LECTOR            ✅
+API PÚBLICA                        ✅
+FCM DEVICES                        ✅
+FCM NOTIFICATION EVENTS            ✅
+NOTIFICATION WORKER                ✅
+PUBLICACIÓN → NOTIFICACIÓN         ✅
+
+
+
+
+RBAC BLOG INFORMATIVO — BACKEND
+│
+├── Auth / JWT / Sessions       ✅ LISTO
+├── RBAC                        ✅ LISTO
+├── Usuarios                    ✅ LISTO
+├── Roles / Permisos            ✅ LISTO
+│
+├── Artículos                   ✅ LISTO / PROBADO
+├── Categorías                  ✅ LISTO / PROBADO
+├── Tags                        ✅ LISTO / PROBADO
+├── Media / MinIO               ✅ LISTO / PROBADO
+├── Article Blocks              ✅ LISTO
+├── OCR                         ✅ LISTO / PROBADO
+├── Publicación                 ✅ LISTO
+├── Programación                ✅ LISTO
+├── Historial                   ✅ LISTO
+├── Notificaciones              ✅ LISTO
+├── Publication Worker          ✅ LISTO
+├── Notification Worker         ✅ LISTO
+├── Favoritos                   ✅ LISTO
+├── Preferencias lector         ✅ LISTO
+├── FCM                         ✅ ESTRUCTURA LISTA
+└── API pública                 ✅ LISTA / PROBADA
+
+
+APP EDITOR
+│
+├── 🔐 Login
+│   ├── username
+│   ├── password
+│   ├── access_token
+│   └── refresh_token
+│
+├── 🏠 Dashboard
+│
+├── 📅 Calendario editorial
+│   ├── seleccionar fecha
+│   ├── ver artículos del día
+│   └── crear artículo
+│
+├── 📝 Editor de artículos
+│   ├── título
+│   ├── contenido / bloques
+│   ├── categoría
+│   ├── tags
+│   ├── imágenes / media
+│   ├── OCR
+│   ├── guardar borrador
+│   ├── programar
+│   ├── publicar
+│   └── archivar
+│
+├── 📂 Categorías
+│
+├── 🏷️ Tags
+│
+├── 🖼️ Media
+│   ├── subir
+│   ├── visualizar
+│   └── administrar
+│
+├── 🔎 OCR
+│
+├── 🔔 Notificaciones
+│
+└── 👤 Perfil / sesión
+
+                 ┌──────────────────────┐
+                 │  FastAPI BACKEND     │
+                 │  YA TERMINADO ✅      │
+                 └──────────┬───────────┘
+                            │
+                 REST / JWT / RBAC
+                            │
+             ┌──────────────┴──────────────┐
+             │                             │
+   ┌─────────▼─────────┐        ┌──────────▼─────────┐
+   │    APP EDITOR     │        │    APP LECTOR      │
+   │     EMPEZAMOS     │        │    DESPUÉS         │
+   └───────────────────┘        └────────────────────┘
